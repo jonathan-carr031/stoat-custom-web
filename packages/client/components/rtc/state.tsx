@@ -186,6 +186,8 @@ class Voice {
     await room.connect(auth.url, auth.token, {
       autoSubscribe: false,
     });
+
+    //todo: add connection sound;
   }
 
   disconnect() {
@@ -203,6 +205,8 @@ class Voice {
         this.#setFullscreen(false);
         this.vidTracks = () => [];
       });
+
+      //todo: add disconnect sound
     } catch (e) {
       this.onErr(e);
     }

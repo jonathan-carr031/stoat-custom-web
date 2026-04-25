@@ -7,11 +7,24 @@ import { RemoteTrackPublication, Track } from "livekit-client";
 
 import { useState } from "@revolt/state";
 
+import { useClient } from "@revolt/client";
+import entrySound from "../../../assets/audio/entry_sound.wav";
+import exitSound from "../../../assets/audio/exit_sound.mp3";
 import { useVoice } from "../state";
 
 export function RoomAudioManager() {
   const voice = useVoice();
   const state = useState();
+
+  const client = useClient();
+
+  const currentUser = client()!.user!.id;
+
+  const voiceParticipantsUserIds: string[] = [];
+
+  voice.channel()?.voiceParticipants.forEach((voiceParticipant) => {
+    voiceParticipantsUserIds.push(voiceParticipant.userId);
+  });
 
   const tracks = useTracks(
     [
@@ -40,6 +53,63 @@ export function RoomAudioManager() {
       (track.publication as RemoteTrackPublication).setSubscribed(true);
       console.info(track.publication);
     }
+
+    const voiceParticipants = voice.channel()?.voiceParticipants;
+
+    console.log(voiceParticipantsUserIds, voiceParticipantsUserIds.length);
+    console.log(voiceParticipants, voiceParticipants?.size);
+
+    if (voiceParticipants === undefined) return;
+
+    if (voiceParticipants?.size == voiceParticipantsUserIds.length) {
+      console.log("No Changes to user list");
+    } else if (voiceParticipants.size > voiceParticipantsUserIds.length) {
+      console.log("User Joined");
+      const joinedUser = voiceParticipants
+        ?.values()
+        .find(
+          (voiceParticipant) =>
+            voiceParticipantsUserIds.indexOf(voiceParticipant.userId) === -1,
+        );
+
+      if (joinedUser == undefined) return;
+
+      console.log(currentUser);
+      console.log(joinedUser.userId);
+
+      if (joinedUser.userId !== currentUser) {
+        console.log("Playing Entry Sound");
+        new Audio(entrySound).play();
+      }
+
+      voiceParticipantsUserIds.push(joinedUser.userId);
+    } else if (voiceParticipants.size < voiceParticipantsUserIds.length) {
+      console.log("User Left");
+      const leftUser = voiceParticipantsUserIds.find((userId) => {
+        const user = voiceParticipants
+          .values()
+          .find((voiceParticipant) => voiceParticipant.userId === userId);
+
+        return user === undefined || user === null;
+      });
+
+      if (leftUser == undefined) return;
+
+      console.log(currentUser);
+      console.log(leftUser);
+
+      if (leftUser !== currentUser) {
+        console.log("Playing Exit Sound");
+        new Audio(exitSound).play();
+      }
+
+      voiceParticipantsUserIds.splice(
+        voiceParticipantsUserIds.indexOf(leftUser),
+        1,
+      );
+    }
+
+    console.log("End", voiceParticipantsUserIds);
   });
 
   return (
