@@ -32,6 +32,8 @@ import {
 } from "@revolt/state/stores/Voice";
 import { VoiceCallCardContext } from "@revolt/ui/components/features/voice/callCard/VoiceCallCard";
 
+import connect_sound from "../../assets/audio/connect_sound.wav";
+import disconnect_sound from "../../assets/audio/disconnect_sound.wav";
 import { InRoom } from "./components/InRoom";
 import { RoomAudioManager } from "./components/RoomAudioManager";
 
@@ -187,7 +189,7 @@ class Voice {
       autoSubscribe: false,
     });
 
-    //todo: add connection sound;
+    new Audio(connect_sound).play();
   }
 
   disconnect() {
@@ -206,7 +208,7 @@ class Voice {
         this.vidTracks = () => [];
       });
 
-      //todo: add disconnect sound
+      new Audio(disconnect_sound).play();
     } catch (e) {
       this.onErr(e);
     }
