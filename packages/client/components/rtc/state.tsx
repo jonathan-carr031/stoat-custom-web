@@ -1,10 +1,10 @@
 import {
   Accessor,
+  JSX,
+  Setter,
   batch,
   createContext,
   createSignal,
-  JSX,
-  Setter,
   useContext,
 } from "solid-js";
 import {
@@ -322,10 +322,11 @@ class Voice {
   async toggleScreenshare() {
     const room = this.room();
     if (!room) throw "invalid state";
+    const targetState = !room.localParticipant.isScreenShareEnabled;
     if (this.screenshare()) {
       await room.localParticipant.setScreenShareEnabled(false);
 
-      this.#setScreenshare(room.localParticipant.isScreenShareEnabled);
+      this.#setScreenshare(!targetState);
     } else {
       const qualities = this.getEnabledScreenShareQualities();
       try {
@@ -336,10 +337,44 @@ class Voice {
               this.getEnabledScreenShareQualities()[
                 this.#settings.screenShareQuality || "low"
               ]?.resolution,
-            // TODO: Change this to true when enabling screen share audio.
-            audio: false,
+
+            audio: true,
+            systemAudio: "exclude",
+            video: { displaySurface: "browser" },
           },
         );
+
+        // Method 2: Fallback for Firefox and browsers ignoring systemAudio
+        // If the user starts a screenshare, verify what they actually selected
+        if (targetState) {
+          const videoPub = room.localParticipant.getTrackPublication(
+            Track.Source.ScreenShare,
+          );
+          const mediaStreamTrack = (videoPub?.track || videoPub?.videoTrack)
+            ?.mediaStreamTrack;
+
+          if (mediaStreamTrack) {
+            const settings = mediaStreamTrack.getSettings();
+
+            // If they chose monitor/window instead of a browser tab, we must kill the audio track to prevent echo!
+            if (
+              settings.displaySurface === "monitor" ||
+              settings.displaySurface === "window"
+            ) {
+              const audioPub = room.localParticipant.getTrackPublication(
+                Track.Source.ScreenShareAudio,
+              );
+
+              if (audioPub && audioPub.track) {
+                console.warn(
+                  "Muting Screenshare Audio: User shared full screen or window instead of a browser tab.",
+                );
+                // Securely unpublish and stop the audio track
+                await room.localParticipant.unpublishTrack(audioPub.track);
+              }
+            }
+          }
+        }
 
         this.#setScreenshare(room.localParticipant.isScreenShareEnabled);
 

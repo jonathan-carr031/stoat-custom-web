@@ -86,24 +86,19 @@ export function VoiceCallCardActions(props: { size: "xs" | "sm" }) {
       </IconButton>
       <IconButton
         size={props.size}
-        variant={isVideoEnabled() && voice.screenshare() ? "filled" : "tonal"}
+        variant={voice.screenshare() ? "filled" : "tonal"}
         onPress={() => {
-          if (isVideoEnabled()) voice.toggleScreenshare();
+          voice.toggleScreenshare();
         }}
         use:floating={{
           tooltip: {
             placement: "top",
-            content: isVideoEnabled()
-              ? voice.screenshare()
-                ? "Stop Sharing"
-                : "Share Screen"
-              : "Coming soon! 👀",
+            content: voice.screenshare() ? "Stop Sharing" : "Share Screen",
           },
         }}
-        isDisabled={!isVideoEnabled()}
       >
         <Show
-          when={!isVideoEnabled() || voice.screenshare()}
+          when={voice.screenshare()}
           fallback={<Symbol>stop_screen_share</Symbol>}
         >
           <Symbol>screen_share</Symbol>
