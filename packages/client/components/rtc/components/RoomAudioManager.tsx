@@ -10,6 +10,8 @@ import { useState } from "@revolt/state";
 import { useClient } from "@revolt/client";
 import entrySound from "../../../assets/audio/entry_sound.wav";
 import exitSound from "../../../assets/audio/exit_sound.mp3";
+import groan_entry from "../../../assets/audio/groan_entry.m4a";
+import groan_exit from "../../../assets/audio/groan_exit.m4a";
 import { useVoice } from "../state";
 
 export function RoomAudioManager() {
@@ -79,7 +81,10 @@ export function RoomAudioManager() {
 
       if (joinedUser.userId !== currentUser) {
         console.log("Playing Entry Sound");
-        new Audio(entrySound).play();
+        const audioChoices = [entrySound, groan_entry];
+
+        const choice = Math.floor(Math.random() * audioChoices.length);
+        new Audio(audioChoices[choice]).play();
       }
 
       voiceParticipantsUserIds.push(joinedUser.userId);
@@ -100,7 +105,11 @@ export function RoomAudioManager() {
 
       if (leftUser !== currentUser) {
         console.log("Playing Exit Sound");
-        new Audio(exitSound).play();
+
+        const audioChoices = [exitSound, groan_exit];
+
+        const choice = Math.floor(Math.random() * audioChoices.length);
+        new Audio(audioChoices[choice]).play();
       }
 
       voiceParticipantsUserIds.splice(
